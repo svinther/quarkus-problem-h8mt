@@ -5,6 +5,7 @@ import io.agroal.api.configuration.AgroalDataSourceConfiguration;
 import io.agroal.api.configuration.supplier.AgroalDataSourceConfigurationSupplier;
 import io.agroal.api.security.NamePrincipal;
 import io.agroal.api.security.SimplePassword;
+import io.quarkus.arc.Unremovable;
 import io.quarkus.hibernate.orm.runtime.customized.QuarkusConnectionProvider;
 import io.quarkus.hibernate.orm.runtime.tenant.TenantConnectionResolver;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
@@ -19,6 +20,7 @@ import static io.agroal.api.configuration.AgroalConnectionPoolConfiguration.Conn
 import static java.time.Duration.ofSeconds;
 
 @ApplicationScoped
+@Unremovable
 public class SignFlowTenantConnectionResolver implements TenantConnectionResolver {
 
   private Map<String, ConnectionProvider> cache = new HashMap<>();
