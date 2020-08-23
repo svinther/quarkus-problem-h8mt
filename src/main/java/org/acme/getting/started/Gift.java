@@ -1,9 +1,6 @@
 package org.acme.getting.started;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class Gift {
@@ -11,7 +8,7 @@ public class Gift {
     private String name;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="giftSeq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "giftSeq")
     public Long getId() {
         return id;
     }
@@ -27,4 +24,5 @@ public class Gift {
     public void setName(String name) {
         this.name = name;
     }
+
 }

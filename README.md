@@ -1,21 +1,19 @@
-# h8mt project
 
-## hibernate-orm multitenant config not being picked up
+# Run postgresql server like this
+```
+docker run --ulimit memlock=-1:-1 -d --rm=true --memory-swappiness=0 \
+       --name postgres-quarkus-hibernate -e POSTGRES_USER=hibernate \
+       -e POSTGRES_PASSWORD=hibernate \
+       -p 5432:5432 postgres:10.5
+       
+docker exec -ti postgres-quarkus-hibernate psql -U hibernate -c "CREATE DATABASE hibernate_db1"       
+docker exec -ti postgres-quarkus-hibernate psql -U hibernate -c "CREATE DATABASE hibernate_db2"       
+docker exec -ti postgres-quarkus-hibernate psql -U hibernate -c "CREATE DATABASE hibernate_db3"       
 
-The methods of class `OrganizationTenantResolver` is never invoked
-
-## application.properties needs to have default ds 
-
-e.g.
+docker exec -ti postgres-quarkus-hibernate psql -U hibernate -c "CREATE TABLE Gift(id bigint primary key, name text); CREATE sequence giftSeq start 1 increment 50;" hibernate_db1
+docker exec -ti postgres-quarkus-hibernate psql -U hibernate -c "CREATE TABLE Gift(id bigint primary key, name text); CREATE sequence giftSeq start 1 increment 50;" hibernate_db2
+docker exec -ti postgres-quarkus-hibernate psql -U hibernate -c "CREATE TABLE Gift(id bigint primary key, name text); CREATE sequence giftSeq start 1 increment 50;" hibernate_db3       
 
 ```
-# datasource configuration
-quarkus.datasource.db-kind = h2
-quarkus.datasource.username = localdemo
-quarkus.datasource.password = localdemo123
-quarkus.datasource.jdbc.url = jdbc:h2://localhost:5432/localdemo
-```
 
-Or EntityMAnager can not be injected.
-
-There is a single `@Entity` defined in this project, but result is the same with or without this
+       
