@@ -1,5 +1,6 @@
 package org.acme.getting.started;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -8,16 +9,14 @@ import javax.persistence.EntityManager;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import javax.transaction.Transactional;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
 @ApplicationScoped
-@Path("/")
 @Transactional
-public class GreetingResource {
+public class GreetingResource implements GreetingResourceIf {
 
     @Inject
     EntityManager em;
@@ -25,27 +24,21 @@ public class GreetingResource {
     @Inject
     TransactionManager tm;
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/gift/{id}")
-    public Gift getgift(@PathParam("id") Long id) {
+    @Override
+    public Gift getgift(Long id) {
         return em.find(Gift.class, id);
     }
 
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/gift/{name}")
-    public Gift addgift(@PathParam("name") String name) {
+    @Override
+    public Gift addgift(String name) {
         Gift gift = new Gift();
         gift.setName(name);
         em.persist(gift);
         return gift;
     }
 
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/cheatgift/{name}")
-    public Gift cheatgift(@PathParam("name") String name) throws SystemException {
+    @Override
+    public Gift cheatgift(String name) throws SystemException {
         Gift gift = new Gift();
         gift.setName(name);
         em.persist(gift);
@@ -54,17 +47,16 @@ public class GreetingResource {
         return gift;
     }
 
-    @PUT
-    @Produces(MediaType.TEXT_PLAIN)
-    @Path("/jdbc")
-    public int jdbc() {
+    @Override
+    public int jdbc(int value) {
         return em.unwrap(Session.class).doReturningWork(connection -> {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("CREATE TEMP TABLE temptable (a integer)");
             }
 
-            try (Statement statement = connection.createStatement()) {
-                statement.execute("INSERT INTO temptable VALUES (42)");
+            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO temptable VALUES (?)")) {
+                statement.setInt(1, value);
+                statement.execute();
             }
 
             try (Statement statement = connection.createStatement()) {
@@ -77,10 +69,8 @@ public class GreetingResource {
         });
     }
 
-    @PUT
-    @Path("/blob/{content}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public long writeblob(@PathParam("content") String content) {
+    @Override
+    public long writeblob(String content) {
         ByteArrayInputStream bytes = new ByteArrayInputStream(content.getBytes());
         return em.unwrap(Session.class).doReturningWork(connection -> {
             connection.setAutoCommit(false);
@@ -89,18 +79,32 @@ public class GreetingResource {
         });
     }
 
-    @GET
-    @Path("/blob/{oid}")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String readblob(@PathParam("oid") long oid) {
-        return em.unwrap(Session.class).doReturningWork(connection -> {
+    @Override
+    public long cheatwriteblob(String content) throws SystemException {
+        ByteArrayInputStream bytes = new ByteArrayInputStream(content.getBytes());
+        long oid = em.unwrap(Session.class).doReturningWork(connection -> {
             connection.setAutoCommit(false);
             LargeObjectHelper largeObjectHelper = new LargeObjectHelper(connection);
-            byte[] bytes = largeObjectHelper.getBlobAsByteArray(oid);
-            return new String(bytes);
+            return largeObjectHelper.createBlob(bytes);
         });
+
+        tm.setRollbackOnly();
+        return oid;
     }
 
-
+    @Override
+    public String readblob(long oid) {
+        try {
+            return em.unwrap(Session.class).doReturningWork(connection -> {
+                connection.setAutoCommit(false);
+                LargeObjectHelper largeObjectHelper = new LargeObjectHelper(connection);
+                byte[] bytes = largeObjectHelper.getBlobAsByteArray(oid);
+                return new String(bytes);
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
 

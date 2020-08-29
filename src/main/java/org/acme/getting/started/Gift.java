@@ -8,6 +8,7 @@ public class Gift {
     private String name;
 
     @Id
+    @SequenceGenerator(name = "giftSeq", sequenceName = "gift_id_seq", allocationSize = 1, initialValue = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "giftSeq")
     public Long getId() {
         return id;
