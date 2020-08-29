@@ -12,10 +12,9 @@ import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.agroal.api.configuration.AgroalConnectionPoolConfiguration.ConnectionValidator.defaultValidator;
 import static java.time.Duration.ofSeconds;
@@ -24,11 +23,13 @@ import static java.time.Duration.ofSeconds;
 @Unremovable
 public class TenantConnections implements TenantConnectionResolver {
 
-    private final Map<String, DBConnectionInfo> dbConnectionInfoMap = Collections.unmodifiableMap(Map.of(
-            "tenant1", new DBConnectionInfo("localhost", 5432, "hibernate", "hibernate", "hibernate_db1"),
-            "tenant2", new DBConnectionInfo("localhost", 5432, "hibernate", "hibernate", "hibernate_db2"),
-            "tenant3", new DBConnectionInfo("localhost", 5432, "hibernate", "hibernate", "hibernate_db3")
-    ));
+    private final Map<String, DBConnectionInfo> dbConnectionInfoMap =
+            IntStream.range(1, 10).boxed()
+                    .collect(Collectors.toMap(
+                            n -> String.format("tenant%02d", n),
+                            n -> new DBConnectionInfo("localhost", 5432, "hibernate", "hibernate", String.format("hibernate_db%02d", n))
+                    ));
+
 
     private final Map<String, ConnectionProvider> cache = new HashMap<>();
 
