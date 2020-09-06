@@ -106,12 +106,29 @@
                     <skip>${skipTests}</skip>
                     <images>
                         <image>
-                            <name>postgres:11.3</name>
+                            <name>testpostgres</name>
                             <alias>postgresql</alias>
+
+                            <!-- We build our own image, to enable proper healthcheck. -->
+                            <!-- Checking for connectivity onm port 5432 is not enough-->
+                            <build>
+                                <from>postgres:11.3</from>
+                                <healthCheck>
+                                    <interval>5s</interval>
+                                    <timeout>3s</timeout>
+                                    <startPeriod>20s</startPeriod>
+                                    <retries>5</retries>
+                                    <!-- Command to execute in shell form -->
+                                    <cmd>pg_isready -U hibernate</cmd>
+                                </healthCheck>
+                            </build>
+
                             <run>
                                 <volumes>
                                     <bind>
-                                        <volume>./target/test-classes//docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d</volume>
+                                        <volume>
+                                            ./target/test-classes//docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+                                        </volume>
                                     </bind>
                                 </volumes>
                                 <env>
@@ -128,19 +145,22 @@
                                     <color>cyan</color>
                                 </log>
                                 <wait>
-                                    <tcp>
-                                        <mode>mapped</mode>
-                                        <ports>
-                                            <port>5432</port>
-                                        </ports>
-                                    </tcp>
-                                    <time>10000</time>
+                                    <healthy>true</healthy>
+                                    <time>20000</time>
                                 </wait>
                             </run>
                         </image>
                     </images>
                 </configuration>
                 <executions>
+                    <execution>
+                        <id>docker-build</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>stop</goal>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
                     <execution>
                         <id>docker-start</id>
                         <phase>test-compile</phase>
