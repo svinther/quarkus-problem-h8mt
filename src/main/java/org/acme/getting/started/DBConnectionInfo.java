@@ -2,18 +2,30 @@ package org.acme.getting.started;
 
 public class DBConnectionInfo {
 
+    private String id;
     private String host;
     private int port;
     private String user;
     private String password;
     private String db;
 
-    public DBConnectionInfo(String host, int port, String user, String password, String db) {
+    private boolean poolingEnabled = true;
+
+    public DBConnectionInfo(String id, String host, int port, String user, String password, String db) {
+        this.id = id;
         this.host = host;
         this.port = port;
         this.user = user;
         this.password = password;
         this.db = db;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getHost() {
@@ -54,5 +66,13 @@ public class DBConnectionInfo {
 
     public void setDb(String db) {
         this.db = db;
+    }
+
+    public boolean isPoolingEnabled() {
+        return poolingEnabled;
+    }
+
+    public void setPoolingEnabled(boolean poolingEnabled) {
+        this.poolingEnabled = poolingEnabled;
     }
 }
